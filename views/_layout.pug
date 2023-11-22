@@ -50,15 +50,16 @@ html(lang="en")
               else
                 a(href=`${httpRoot}noscript`) click here
 
-    block printstuff
-        #printview Hello
+    //- block printstuff
+    //-     #printview Hello
 
     block footer
         include templates/templates
 
     block scripts
-        script(src=`${httpRoot}client-options.js?hash=${optionsHash}`)
+        script(src=`${httpRoot}client-options.js?hash=${optionsHash}&url=${url}`)
         div#config(extraOptions=encodeURIComponent(compilerExplorerOptions), httpRoot=httpRoot, staticRoot=staticRoot)
         script(src=require("runtime.js"))
         script(src=require("vendor.js"))
         script(src=require("main.js"))
+        //- script(src='/js/materialize.min.js')

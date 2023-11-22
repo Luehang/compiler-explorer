@@ -1,0 +1,25 @@
+#program
+  .top-bar.btn-toolbar.bg-light(role="toolbar")
+    //- include ../../font-size
+  .content
+    .main-content
+      .card
+        .container !{programContent}
+        .container#test-cards
+    #answer-input(value="")
+  .bottom-bar.btn-toolbar.bg-light(role="toolbar")
+    //- button.btn.btn-flat.btn-sm.waves-effect
+    //-   span.fas.fa-question-circle
+    //-   span.hideable &nbsp;Ask For Help
+    //- button.btn.btn-flat.btn-sm.waves-effect
+    //-   span.fa.fa-bug
+    //-   span.hideable &nbsp;Report Bug
+    .btn-group.btn-group-sm.ml-auto(role="group" aria-label="Editor language")
+      //- button.btn.btn-sm.language-info
+      //-   span.fas.fa-info
+      button.btn.btn-flat.btn-sm.waves-effect#test-button
+        span.fas.fa-play.text-success
+        span.hideable &nbsp;Run Tests
+      button.btn.btn-flat.btn-sm.waves-effect#next-button
+        span.fas.fa-forward.text-success
+        span.hideable &nbsp;Next

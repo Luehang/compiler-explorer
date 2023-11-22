@@ -33,6 +33,7 @@ import {
     DEVICE_VIEW_COMPONENT_NAME,
     DIFF_VIEW_COMPONENT_NAME,
     EDITOR_COMPONENT_NAME,
+    PROGRAM_COMPONENT_NAME,
     EXECUTOR_COMPONENT_NAME,
     FLAGS_VIEW_COMPONENT_NAME,
     GCC_DUMP_VIEW_COMPONENT_NAME,
@@ -58,6 +59,7 @@ import {EventHub} from './event-hub.js';
 import {Editor} from './panes/editor.js';
 import {Tree} from './panes/tree.js';
 import {Compiler} from './panes/compiler.js';
+import {Program} from './panes/program.js';
 import {Executor} from './panes/executor.js';
 import {Output} from './panes/output.js';
 import {Tool} from './panes/tool.js';
@@ -121,6 +123,7 @@ export class Hub {
         layout.registerComponent(EDITOR_COMPONENT_NAME, (c, s) => this.codeEditorFactory(c, s));
         layout.registerComponent(COMPILER_COMPONENT_NAME, (c, s) => this.compilerFactory(c, s));
         layout.registerComponent(TREE_COMPONENT_NAME, (c, s) => this.treeFactory(c, s));
+        layout.registerComponent(PROGRAM_COMPONENT_NAME, (c, s) => this.codeProgramFactory(c, s));
         layout.registerComponent(EXECUTOR_COMPONENT_NAME, (c, s) => this.executorFactory(c, s));
         layout.registerComponent(OUTPUT_COMPONENT_NAME, (c, s) => this.outputFactory(c, s));
         layout.registerComponent(TOOL_COMPONENT_NAME, (c, s) => this.toolFactory(c, s));
@@ -404,6 +407,10 @@ export class Hub {
 
     public compilerFactory(container: GoldenLayout.Container, state: any): any /* typeof Compiler */ {
         return new Compiler(this, container, state);
+    }
+
+    private codeProgramFactory(container: GoldenLayout.Container, state: any): any /*typeof Executor */ {
+        return new Program(this, container, state);
     }
 
     public executorFactory(container: GoldenLayout.Container, state: any): any /*typeof Executor */ {

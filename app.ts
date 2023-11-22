@@ -22,7 +22,11 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
 import child_process from 'child_process';
+import fsn from 'fs';
 import os from 'os';
 import path from 'path';
 import process from 'process';
@@ -31,8 +35,10 @@ import url from 'url';
 import * as Sentry from '@sentry/node';
 import bodyParser from 'body-parser';
 import compression from 'compression';
+import {config} from 'dotenv';
 import express from 'express';
 import fs from 'fs-extra';
+import {marked} from 'marked';
 import morgan from 'morgan';
 import nopt from 'nopt';
 import PromClient from 'prom-client';
@@ -40,11 +46,19 @@ import responseTime from 'response-time';
 import sanitize from 'sanitize-filename';
 import sFavicon from 'serve-favicon';
 import systemdSocket from 'systemd-socket';
+import UglifyJS from 'uglify-js';
 import _ from 'underscore';
 import urljoin from 'url-join';
 
+/* eslint-disable import/extensions, node/no-unpublished-import */
+// import {courses} from './content/courses/cpp/index.js';
+// import coursesModule from './content/courses/cpp/index.js';
+import courses from './content/courses/cpp/index.js';
+import {Course} from './content/courses/types.js';
 import * as aws from './lib/aws.js';
 import * as normalizer from './lib/clientstate-normalizer.js';
+import {ElementType} from './lib/common-utils.js';
+/* eslint-enable */
 import {CompilationEnvironment} from './lib/compilation-env.js';
 import {CompilationQueue} from './lib/compilation-queue.js';
 import {CompilerFinder} from './lib/compiler-finder.js';
@@ -64,11 +78,17 @@ import * as props from './lib/properties.js';
 import {SetupSentry} from './lib/sentry.js';
 import {ShortLinkResolver} from './lib/shortener/google.js';
 import {sources} from './lib/sources/index.js';
-import {loadSponsorsFromString} from './lib/sponsors.js';
+// import {loadSponsorsFromString} from './lib/sponsors.js';
 import {getStorageTypeByKey} from './lib/storage/index.js';
 import * as utils from './lib/utils.js';
 import {ElementType} from './shared/common-utils.js';
 import type {Language, LanguageKey} from './types/languages.interfaces.js';
+
+// const {courses} = coursesModule;
+
+config();
+
+// const {courses} = pkg;
 
 // Used by assert.ts
 global.ce_base_directory = new URL('.', import.meta.url);
@@ -235,15 +255,15 @@ if (defArgs.suppressConsoleLog) {
 const isDevMode = () => process.env.NODE_ENV !== 'production';
 
 function getFaviconFilename() {
-    if (isDevMode()) {
-        return 'favicon-dev.ico';
-    } else if (opts.env && opts.env.includes('beta')) {
-        return 'favicon-beta.ico';
-    } else if (opts.env && opts.env.includes('staging')) {
-        return 'favicon-staging.ico';
-    } else {
-        return 'favicon.ico';
-    }
+    // if (isDevMode()) {
+    //     return 'favicon-dev.ico';
+    // } else if (opts.env && opts.env.includes('beta')) {
+    //     return 'favicon-beta.ico';
+    // } else if (opts.env && opts.env.includes('staging')) {
+    //     return 'favicon-staging.ico';
+    // } else {
+    return 'favicon.ico';
+    // }
 }
 
 const propHierarchy = [
@@ -626,6 +646,7 @@ async function main() {
                 }
             }),
         )
+        .use(express.static('public'))
         // Handle healthchecks at the root, as they're not expected from the outside world
         .use('/healthcheck', new healthCheck.HealthCheckHandler(compilationQueue, healthCheckFilePath).handle)
         .use(httpRoot, router)
@@ -646,7 +667,7 @@ async function main() {
             }
         });
 
-    const sponsorConfig = loadSponsorsFromString(fs.readFileSync(configDir + '/sponsors.yaml', 'utf8'));
+    // const sponsorConfig = loadSponsorsFromString(fs.readFileSync(configDir + '/sponsors.yaml', 'utf8'));
 
     loadSiteTemplates(configDir);
 
@@ -672,7 +693,7 @@ async function main() {
         options.staticRoot = staticRoot;
         options.storageSolution = storageSolution;
         options.require = pugRequireHandler;
-        options.sponsors = sponsorConfig;
+        // options.sponsors = sponsorConfig;
         return options;
     }
 
@@ -758,6 +779,71 @@ async function main() {
         res.end(`importScripts('${urljoin(staticRoot, req.params.worker)}');`);
     });
 
+    function getRandomIntInclusive(min: number, max: number): number {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        //The maximum is inclusive and the minimum is inclusive
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function readModuleFile(path: string, callback): void {
+        try {
+            fsn.readFile(path, 'utf8', callback);
+        } catch (e) {
+            callback(e);
+        }
+    }
+
+    function findData(data: Course[], find: {url: string}): Promise<Course> {
+        return new Promise((resolve, reject) => {
+            for (const [index, item] of data.entries()) {
+                if (item.url === find.url) {
+                    item._index = index;
+                    return resolve(item);
+                }
+            }
+            reject(undefined);
+        });
+    }
+
+    // function findData(data: Course[], find: {url: string}): Promise<Course> {
+    //     const keys: string[] = Object.keys(find);
+    //     const values: string[] = Object.values(find);
+    //     const matchTotal: number = keys.length;
+    //     return new Promise((resolve, reject) => {
+    //         const total = data.length;
+    //         let progressInc = 0;
+    //         for (const [index, item] of data.entries()) {
+    //             let progressMatch = 0;
+    //             let progressKeys = 0;
+    //             for (let i = 0; i < matchTotal; i++) {
+    //                 if (item[keys[i]] === values[i]) {
+    //                     progressMatch++;
+    //                     if (matchTotal === progressMatch) {
+    //                         item._index = index;
+    //                         return resolve(item);
+    //                     }
+    //                 }
+    //                 progressKeys++;
+    //                 if (matchTotal === progressKeys) {
+    //                     progressInc++;
+    //                 }
+    //                 if (total === progressInc) {
+    //                     return reject(undefined);
+    //                 }
+    //             }
+    //         }
+    //     });
+    // }
+
+    function getExample(path) {
+        return new Promise(resolve => {
+            readModuleFile(path, function (err, text) {
+                resolve(text);
+            });
+        });
+    }
+
     router
         .use(
             morgan(morganFormat, {
@@ -781,19 +867,109 @@ async function main() {
             }),
         )
         .use(compression())
-        .get('/', (req, res) => {
-            staticHeaders(res);
-            contentPolicyHeader(res);
-            res.render(
-                'index',
-                renderConfig(
+        .use((req, res, next) => {
+            return express.static(path.join(path.resolve(), 'lueh-code-camp-ui', 'build'))(req, res, next);
+        })
+        // .get('/', (req, res) => {
+        //     staticHeaders(res);
+        //     contentPolicyHeader(res);
+        //     res.render(
+        //         'index',
+        //         renderConfig(
+        //             {
+        //                 // title: 'Online C/C++ Compiler',
+        //                 brandName: process.env.BRAND_NAME,
+        //                 programCourse: false,
+        //                 embedded: false,
+        //                 mobileViewer: isMobileViewer(req),
+        //             },
+        //             req.query,
+        //         ),
+        //     );
+        // })
+        .get(
+            [
+                '/',
+                '/login',
+                '/register',
+                '/forgot',
+                '/reset-password',
+                '/check-mail',
+                '/bugs-report',
+                '/contact',
+                '/hire',
+                '/overview',
+                '/learn-languages/cpp',
+                '/problem-solving/algorithms',
+                '/specialized-questions/niche-questions',
+                '/specialized-questions/behavioral-questions',
+                '/system-design/learn',
+                '/system-design/questions',
+            ],
+            (req, res) => {
+                res.sendFile(path.join(path.resolve(), 'lueh-code-camp-ui', 'build', 'index.html'));
+            },
+        )
+        // .get('/random-quote', (req, res) => {
+        //     function getRandomIntInclusive(min, max) {
+        //         min = Math.ceil(min);
+        //         max = Math.floor(max);
+        //         return Math.floor(Math.random() * (max - min + 1)) + min;
+        //     }
+        //     staticHeaders(res);
+        //     res.json(quotes[getRandomIntInclusive(0, quotes.length - 1)]);
+        // })
+        .get('/cpp', async (req, res) => {
+            try {
+                staticHeaders(res);
+                res.json(courses);
+            } catch (err) {
+                res.status(500).end();
+            }
+        })
+        .get('/cpp/:section/:title', async (req, res) => {
+            try {
+                staticHeaders(res);
+                // contentPolicyHeader(res);
+                const url = req.url.split('?')[0].toLowerCase();
+                // const { section, title } = req.params;
+                // console.log(url, section, title);
+                marked.setOptions({
+                    breaks: true,
+                });
+
+                const data: Course = await findData(courses, {
+                    url,
+                });
+                // .catch(() => {
+                //     return res.redirect('/');
+                // });
+                const config = renderConfig(
                     {
+                        title: `${data.title} - ${data.category} ${data.section}`,
                         embedded: false,
-                        mobileViewer: isMobileViewer(req),
+                        brandName: process.env.BRAND_NAME,
+                        programCourse: true,
+                        programCourseId: data.id,
                     },
                     req.query,
-                ),
-            );
+                );
+                config.url = data.url;
+                config.programContent = await new Promise(resolve => {
+                    readModuleFile(process.cwd() + data.contentPath, function (err, text) {
+                        if (err) {
+                            // console.log('readModuleFile', err);
+                        }
+                        marked(text, (err, data) => {
+                            resolve(data);
+                        });
+                    });
+                });
+                // config.randomQuote = quotes[getRandomIntInclusive(0, quotes.length - 1)];
+                res.render('index', config);
+            } catch (err) {
+                res.redirect('/');
+            }
         })
         .get('/e', embeddedHandler)
         // legacy. not a 301 to prevent any redirect loops between old e links and embed.html
@@ -813,20 +989,75 @@ async function main() {
                 ),
             );
         })
-        .get('/robots.txt', (req, res) => {
-            staticHeaders(res);
-            res.end('User-agent: *\nSitemap: https://godbolt.org/sitemap.xml\nDisallow:');
-        })
-        .get('/sitemap.xml', (req, res) => {
-            staticHeaders(res);
-            res.set('Content-Type', 'application/xml');
-            res.render('sitemap');
-        })
+        // .get('/robots.txt', (req, res) => {
+        //     staticHeaders(res);
+        //     res.end('User-agent: *\nSitemap: https://godbolt.org/sitemap.xml\nDisallow:');
+        // })
+        // .get('/sitemap.xml', (req, res) => {
+        //     staticHeaders(res);
+        //     res.set('Content-Type', 'application/xml');
+        //     res.render('sitemap');
+        // })
         .use(sFavicon(utils.resolvePathFromAppRoot('static/favicons', getFaviconFilename())))
-        .get('/client-options.js', (req, res) => {
+        .get('/client-options.js', async (req, res) => {
             staticHeaders(res);
             res.set('Content-Type', 'application/javascript');
-            res.end(`window.compilerExplorerOptions = ${clientOptionsHandler.getJSON()};`);
+            const url: string = req.query.url || null;
+            const config = clientOptionsHandler.get();
+
+            const type = url ? url.match(/[a-z]+/gi)[0] : null;
+
+            if (type === 'cpp') {
+                const data = await findData(courses, {
+                    url,
+                });
+
+                if (data) {
+                    const [js, jsTest, example] = await Promise.all([
+                        new Promise(resolve => {
+                            readModuleFile(process.cwd() + data.jsPath, function (err, text) {
+                                if (err) {
+                                    // console.log('readModuleFile', err);
+                                }
+                                return resolve(text);
+                            });
+                        }),
+                        new Promise(resolve => {
+                            readModuleFile(process.cwd() + '/content/courses/test.js', function (err, text) {
+                                if (err) {
+                                    // console.log('readModuleFile', err);
+                                }
+                                return resolve(text);
+                            });
+                        }),
+                        getExample(process.cwd() + data.sourcePath),
+                    ]);
+                    const options = {
+                        ie8: true,
+                        mangle: {
+                            toplevel: true,
+                        },
+                    };
+                    const jsAll = UglifyJS.minify(js + jsTest, options).code;
+                    config.languages['c++'].example = example;
+                    config.course = {'c++': {}};
+                    config.course['c++'].sectionId = data.sectionId;
+                    config.course['c++'].section = data.section;
+                    config.course['c++'].js = jsAll;
+                    // config.course['c++'].testJs = process.cwd() + '/content/courses/test.js';
+                    config.course['c++'].url = data.url;
+                    config.course['c++'].nextUrl =
+                        courses[data._index + 1] && courses[data._index + 1].sectionId
+                            ? courses[data._index + 1].url
+                            : courses[data._index + 2]
+                            ? courses[data._index + 2].url
+                            : '/';
+                }
+            }
+            const options = JSON.stringify(config);
+
+            res.end(`window.compilerExplorerOptions = ${options};`);
+            // res.end(`window.compilerExplorerOptions = ${clientOptionsHandler.getJSON()};`);
         })
         .use('/bits/:bits(\\w+).html', (req, res) => {
             staticHeaders(res);
@@ -858,13 +1089,13 @@ async function main() {
     startListening(webServer);
 }
 
-if (opts.version) {
-    logger.info('Compiler Explorer version info:');
-    logger.info(`  git release ${gitReleaseName}`);
-    logger.info(`  release build ${releaseBuildNumber}`);
-    logger.info('Exiting');
-    process.exit(0);
-}
+// if (opts.version) {
+//     logger.info('Compiler Explorer version info:');
+//     logger.info(`  git release ${gitReleaseName}`);
+//     logger.info(`  release build ${releaseBuildNumber}`);
+//     logger.info('Exiting');
+//     process.exit(0);
+// }
 
 process.on('uncaughtException', uncaughtHandler);
 process.on('SIGINT', signalHandler('SIGINT'));

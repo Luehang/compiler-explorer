@@ -46,3 +46,11 @@ lib/asm-docs/generated/asm-docs-*
 # Files we ought to ignore
 
 static/policies/*.html
+
+.DS_Store
+lueh-code-camp-ui/
+lueh-code-camp-api-server/
+data/
+content/
+.env
+static/materialize-src/

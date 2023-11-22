@@ -28,3 +28,10 @@ newrelic_agent.log
 
 # approval tests
 *.received.*
+
+.DS_Store
+lueh-code-camp-ui/
+lueh-code-camp-api-server/
+data/
+content/
+.env

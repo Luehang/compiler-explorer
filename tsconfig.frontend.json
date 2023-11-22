@@ -19,6 +19,9 @@
     "lib",
     "examples",
     "webpack.config.esm.ts",
-    "cypress"
+    "cypress",
+    "static",
+    "content",
+    "lueh-code-camp-ui"
   ]
 }

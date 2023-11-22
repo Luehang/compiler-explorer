@@ -77,6 +77,7 @@ import {
     PopulatedDeviceViewState,
     COMPILER_COMPONENT_NAME,
     EXECUTOR_COMPONENT_NAME,
+    PROGRAM_COMPONENT_NAME,
     EDITOR_COMPONENT_NAME,
     TREE_COMPONENT_NAME,
     OUTPUT_COMPONENT_NAME,
@@ -168,6 +169,19 @@ export function getExecutor(editorId: number, lang: string): ComponentConfig<Emp
     return {
         type: 'component',
         componentName: EXECUTOR_COMPONENT_NAME,
+        componentState: {
+            source: editorId,
+            lang,
+            compilationPanelShown: true,
+            compilerOutShown: true,
+        },
+    };
+}
+
+export function getProgram(editorId: number, lang: string): ComponentConfig<EmptyExecutorState> {
+    return {
+        type: 'component',
+        componentName: PROGRAM_COMPONENT_NAME,
         componentState: {
             source: editorId,
             lang,

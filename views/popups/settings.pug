@@ -20,15 +20,15 @@ mixin input(cls, type, text, style)
     .modal-content
       .modal-header
         h5.modal-title
-          | Compiler Explorer Settings
+          | Settings
         button.close(type="button" data-dismiss="modal" aria-label="Close")
           span(aria-hidden="true") &times;
       .modal-body
         .card
           .card-header
-            | These settings control how Compiler Explorer acts for you. They are not
-            | preserved as part of shared URLs, and are persisted locally using browser
-            | local storage.
+            //- | These settings control how Compiler Explorer acts for you. They are not
+            //- | preserved as part of shared URLs, and are persisted locally using browser
+            //- | local storage.
             ul.nav.nav-tabs.card-header-tabs(role="tablist")
               li.nav-item(role="presentation"): a.nav-link.active(href="#colouring" role="tab" data-toggle="tab") Colouring
               li.nav-item(role="presentation"): a.nav-link(href="#site-behaviour" role="tab" data-toggle="tab") Site behaviour

@@ -30,6 +30,7 @@ import {ConfiguredOverrides} from './compilation/compiler-overrides.interfaces.j
 export const COMPILER_COMPONENT_NAME = 'compiler';
 export const EXECUTOR_COMPONENT_NAME = 'executor';
 export const EDITOR_COMPONENT_NAME = 'codeEditor';
+export const PROGRAM_COMPONENT_NAME = 'program';
 export const TREE_COMPONENT_NAME = 'tree';
 export const OUTPUT_COMPONENT_NAME = 'output';
 export const TOOL_COMPONENT_NAME = 'tool';

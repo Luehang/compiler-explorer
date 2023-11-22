@@ -43,6 +43,16 @@ export type Library = {
     versions: Record<string, LibraryVersion>;
 };
 
+export type Course = {
+    [key: string]: {
+        js: string;
+        nextUrl: string;
+        section: string;
+        testJs: string;
+        url: string;
+    }
+}
+
 export type LanguageLibs = Record<string, Library>;
 
 export type Libs = Record<string, LanguageLibs>;
@@ -55,6 +65,7 @@ export type Options = {
     remoteLibs: LibsPerRemote;
     languages: Partial<Record<LanguageKey, Language>>;
     compilers: CompilerInfo[];
+    course: Course;
     defaultCompiler: Record<LanguageKey, string>;
     defaultLibs: Record<LanguageKey, string | null>;
     defaultFontScale: number;

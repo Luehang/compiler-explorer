@@ -1079,7 +1079,7 @@ export class Executor extends Pane<ExecutorState> {
             execStdin: this.executionStdin,
             libs: this.libsWidget?.get(),
             lang: this.currentLangId,
-            compilationPanelShown: !this.panelCompilation.hasClass('d-none'),
+            compilationPanelShown: options.programCourse ? false : !this.panelCompilation.hasClass('d-none'),
             compilerOutShown: !this.compilerOutputSection.hasClass('d-none'),
             argsPanelShown: !this.panelArgs.hasClass('d-none'),
             stdinPanelShown: !this.panelStdin.hasClass('d-none'),
@@ -1094,7 +1094,9 @@ export class Executor extends Pane<ExecutorState> {
 
     override updateState(): void {
         const state = this.getCurrentState();
-        this.container.setState(state);
+        if (!options.programCourse) {
+            this.container.setState(state);
+        }
         this.compilerShared.updateState(state);
     }
 

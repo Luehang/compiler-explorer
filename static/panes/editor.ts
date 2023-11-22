@@ -159,6 +159,10 @@ export class Editor extends MonacoPane<monaco.editor.IStandaloneCodeEditor, Edit
         //     // movement etc).
         //     this.debouncedEmitChange();
         // });
+
+        if (options.programCourse) {
+            this.domRoot.find('.load-save').css('display', 'none');
+        }
     }
 
     override initializeDefaults(): void {
@@ -291,9 +295,13 @@ export class Editor extends MonacoPane<monaco.editor.IStandaloneCodeEditor, Edit
             filename: this.filename,
         };
         this.fontScale.addState(state);
-        this.container.setState(state);
+
+        if (!options.programCourse) {
+            this.container.setState(state);
+        }
 
         this.updateButtons();
+        // console.log('updated state', state);
     }
 
     setSource(newSource: string): void {
@@ -551,6 +559,11 @@ export class Editor extends MonacoPane<monaco.editor.IStandaloneCodeEditor, Edit
         this.languageInfoButton.popover({});
         this.languageBtn = this.domRoot.find('.change-language');
         const changeLanguageButton = this.languageBtn[0];
+
+        if (options.programCourse) {
+            changeLanguageButton.setAttribute('disabled', 'true');
+        }
+
         assert(changeLanguageButton instanceof HTMLSelectElement);
         this.selectize = new TomSelect(changeLanguageButton, {
             sortField: 'name',

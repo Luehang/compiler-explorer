@@ -1,0 +1,12 @@
+#completed.modal.fade(tabindex="-1" role="dialog")
+  .modal-dialog
+    .modal-content
+      .modal-header
+        h5.modal-title Challenge Completed
+        button.close(type="button")
+          span(aria-hidden="true")
+            | &times;
+      .modal-body.text-center
+        p.completed-quote #{randomQuote}
+      .modal-footer
+        button#next-button.btn.btn-primary(type="button") Next Challenge

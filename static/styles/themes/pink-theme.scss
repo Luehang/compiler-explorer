@@ -549,14 +549,17 @@ textarea.form-control {
 .rainbow-decoration {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    background-image: linear-gradient(
-        60deg,
-        #ed4242 0,
-        #ffaa44 20%,
-        #fff344 40%,
-        #43a35b 60%,
-        #447cff 80%,
-        #9c44a9 100%
+    background-image: -webkit-gradient(
+        linear,
+        left top,
+        right bottom,
+        color-stop(0, red),
+        color-stop(16%, orange),
+        color-stop(32%, yellow),
+        color-stop(48%, green),
+        color-stop(60%, blue),
+        color-stop(76%, indigo),
+        color-stop(1, violet)
     );
 }
 
@@ -686,23 +689,193 @@ textarea.form-control {
     }
 }
 
-.compiler-arg-warning-icon {
-    color: #f22 !important;
+
+
+
+/**
+ * main content
+ */
+
+.main-content h1:before,
+.main-content h2:before,
+.main-content h3:before,
+.main-content h4:before,
+.main-content h5:before,
+.main-content h6:before {
+    display: block;
+    content: " ";
+    margin-top: -75px;
+    height: 75px;
+    visibility: hidden;
+}
+.main-content i {
+    font-size: inherit;
+}
+.main-content p {
+    color: #424242;
+}
+.main-content p code,
+.main-contant div > code,
+.main-content h1 code,
+.main-content h2 code,
+.main-content h3 code,
+.main-content h4 code,
+.main-content h5 code,
+.main-content h6 code,
+.main-content ul code,
+.main-content ol code,
+.main-content table code,
+.main-content blockquote code {
+    background: $base;
+    color: #688be2;
+    border-radius: 5px;
+    padding: 3px;
+    line-height: 27px;
+}
+.main-content blockquote {
+    background: #ffebee;
+    border-left: 5px solid #ef9a9a;
+    border-radius: 0 2px 2px 0;
+    padding: 8px 1rem 6px 1.5rem;
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 3px 1px -2px rgba(0,0,0,0.12), 0 1px 5px 0 rgba(0,0,0,0.2);
+}
+// .main-content blockquote code {
+//     background: #ffcdd2;
+//     color: #e57373;
+//     border-radius: 5px;
+//     padding: 3px;
+//     line-height: 27px;
+// }
+.main-content img {
+    box-shadow: 0 4px 5px 0 rgba(0,0,0,0.14), 0 1px 10px 0 rgba(0,0,0,0.12), 0 2px 4px -1px rgba(0,0,0,0.3);
+    border-radius: 2px;
+}
+.btn-custom {
+    background: $dark;
+    color: #212529;
+    border-radius: 2px;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border: none;
+    box-shadow: none;
+    transition: all 0.3s ease-in-out;
+}
+.btn-custom:hover {
+    box-shadow: none;
+    background: $base;
 }
 
-.compiler-arg-warning {
-    border-color: #f22;
-    &:before {
-        border-color: #f22;
-        background: #f22;
-    }
-    &.info {
-        border-color: #3f92ff;
-        &:before {
-            border-color: #3f92ff;
-            background: #3f92ff;
-            content: '\f05a';
-            color: rgb(20, 21, 22);
-        }
-    }
+
+
+
+/* PrismJS 1.29.0 https://prismjs.com/download.html#themes=prism-solarizedlight&languages=markup+css+clike+javascript+c+csharp+cpp+python */
+code[class*=language-],pre[class*=language-]{
+    color:#657b83;
+    font-family:Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace;
+    font-size:1em;
+    text-align:left;
+    white-space:pre;
+    word-spacing:normal;
+    word-break:normal;
+    word-wrap:normal;
+    line-height:1.5;
+    -moz-tab-size:4;
+    -o-tab-size:4;
+    tab-size:4;
+    -webkit-hyphens:none;
+    -moz-hyphens:none;
+    -ms-hyphens:none;
+    hyphens:none
 }
+code[class*=language-] ::-moz-selection,code[class*=language-]::-moz-selection,pre[class*=language-] ::-moz-selection,pre[class*=language-]::-moz-selection{
+    background:#073642
+}
+code[class*=language-] ::selection,code[class*=language-]::selection,pre[class*=language-] ::selection,pre[class*=language-]::selection{
+    background:#073642
+}
+pre[class*=language-]{
+    padding:1em;
+    margin:.5em 0;
+    overflow:auto;
+    border-radius:.3em
+}
+:not(pre)>code[class*=language-],pre[class*=language-]{
+    background-color: $base;
+}
+:not(pre)>code[class*=language-]{
+    padding:.1em;
+    border-radius:.3em
+}
+.token.cdata,.token.comment,.token.doctype,.token.prolog{
+    color:#93a1a1
+}
+.token.punctuation{
+    color:#586e75
+}
+.token.namespace{
+    opacity:.7
+}
+.token.boolean,.token.constant,.token.deleted,.token.number,.token.property,.token.symbol,.token.tag{
+    color:#268bd2
+}
+.token.attr-name,.token.builtin,.token.char,.token.inserted,.token.selector,.token.string,.token.url{
+    color:#2aa198
+}
+.token.entity{
+    color:#657b83;
+    background:#eee8d5
+}
+.token.atrule,.token.attr-value,.token.keyword{
+    color:#859900
+}
+.token.class-name,.token.function{
+    color:#b58900
+}
+.token.important,.token.regex,.token.variable{
+    color:#cb4b16
+}
+.token.bold,.token.important{
+    font-weight:700
+}
+.token.italic{
+    font-style:italic
+}
+.token.entity{
+    cursor:help
+}
+
+
+
+
+
+
+/*
+*  Scroll style
+*/
+
+*::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.1);
+    background-color: #F5F5F5;
+    border-radius: 10px;
+    opacity: 0;
+}
+
+*::-webkit-scrollbar {
+    height: 7.5px;
+    width: 7.5px;
+    background-color: #F5F5F5;
+    opacity: 0;
+}
+
+*::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background-color: #c7c8c7;
+    /* background-image: -webkit-gradient(linear,
+        left bottom,
+        left top,
+        color-stop(0.86, #f5f2f0),
+        color-stop(0.72, #FAF9F8),
+        color-stop(0.44, #fff)
+    ); */
+}
+ 

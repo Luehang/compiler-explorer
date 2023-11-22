@@ -39,6 +39,8 @@ import _ from 'underscore';
 import GoldenLayout from 'golden-layout';
 import JsCookie from 'js-cookie';
 import clipboard from 'clipboard';
+import * as Sentry from '@sentry/browser';
+import Prism from 'prismjs';
 
 // We re-assign this
 let jsCookie = JsCookie;
@@ -80,8 +82,17 @@ if (!window.PRODUCTION && !options.embedded) {
 require('bootstrap/dist/css/bootstrap.min.css');
 require('golden-layout/src/css/goldenlayout-base.css');
 require('tom-select/dist/css/tom-select.bootstrap4.css');
+require('./materialize-src/sass/materialize.scss');
 require('./styles/colours.scss');
 require('./styles/explorer.scss');
+// require('./materialize-src/js/bin/materialize.min.js');
+require('prismjs/components/prism-bash.min.js');
+require('prismjs/components/prism-c.min.js');
+require('prismjs/components/prism-cpp.min.js');
+require('prismjs/components/prism-javascript.min.js');
+require('prismjs/components/prism-python.min.js');
+
+Prism.highlightAll();
 
 // Check to see if the current unload is a UI reset.
 // Forgive me the global usage here
@@ -220,24 +231,24 @@ function setupButtons(options: CompilerExplorerOptions, hub: Hub) {
             SentryCapture(err, '$.get failed');
         });
 
-    $('#ces').on('click', () => {
-        $.get(window.location.origin + window.httpRoot + 'bits/sponsors.html')
-            .done(data => {
-                alertSystem.alert('Compiler Explorer Sponsors', data);
-                analytics.proxy('send', {
-                    hitType: 'event',
-                    eventCategory: 'Sponsors',
-                    eventAction: 'open',
-                });
-            })
-            .fail(err => {
-                const result = err.responseText || JSON.stringify(err);
-                alertSystem.alert(
-                    'Compiler Explorer Sponsors',
-                    '<div>Unable to fetch sponsors:</div><div>' + result + '</div>',
-                );
-            });
-    });
+    // $('#ces').on('click', () => {
+    //     $.get(window.location.origin + window.httpRoot + 'bits/sponsors.html')
+    //         .done(data => {
+    //             alertSystem.alert('Compiler Explorer Sponsors', data);
+    //             analytics.proxy('send', {
+    //                 hitType: 'event',
+    //                 eventCategory: 'Sponsors',
+    //                 eventAction: 'open',
+    //             });
+    //         })
+    //         .fail(err => {
+    //             const result = err.responseText || JSON.stringify(err);
+    //             alertSystem.alert(
+    //                 'Compiler Explorer Sponsors',
+    //                 '<div>Unable to fetch sponsors:</div><div>' + result + '</div>',
+    //             );
+    //         });
+    // });
 
     $('#ui-history').on('click', () => {
         historyWidget.run(data => {
@@ -268,9 +279,9 @@ function configFromEmbedded(embeddedUrl: string, defaultLangId: string) {
             '<div style="padding: 10px; background: #fa564e; color: black;">' +
                 "An error was encountered while decoding the URL for this embed. Make sure the URL hasn't been " +
                 'truncated, otherwise if you believe your URL is valid please let us know on ' +
-                '<a href="https://github.com/compiler-explorer/compiler-explorer/issues" style="color: black;">' +
-                'our github' +
-                '</a>.' +
+                // '<a href="https://github.com/compiler-explorer/compiler-explorer/issues" style="color: black;">' +
+                // 'our github' +
+                // '</a>.' +
                 '</div>',
         );
         throw new Error('Embed url decode error');
@@ -307,9 +318,48 @@ function fixBugsInConfig(config: Record<string, any> & {content?: any[]}) {
     }
 }
 
+function findProgram(obj, path, cb) {
+    obj.content.forEach(function (data, i) {
+        const tempConfig = obj;
+        let tempPath = path;
+        tempPath = tempPath.concat(['content']);
+        const isFound = tempConfig.content[i].componentName === 'program';
+        if (isFound) {
+            tempPath = tempPath.concat([i]);
+            cb && cb(undefined, true);
+            return tempPath;
+        } else {
+            if (tempConfig.content[i].content) {
+                tempPath = tempPath.concat([i]);
+                findProgram(tempConfig.content[i], tempPath, cb);
+            }
+        }
+    });
+}
+
+function findContent(obj, path, cb) {
+    obj.content.forEach(function (data, i) {
+        const tempConfig = obj;
+        let tempPath = path;
+        tempPath = tempPath.concat(['content']);
+        const isFound = tempConfig.content[i].componentName === 'codeEditor';
+        if (isFound) {
+            tempPath = tempPath.concat([i]);
+            cb && cb(undefined, tempPath);
+            return tempPath;
+        } else {
+            if (tempConfig.content[i].content) {
+                tempPath = tempPath.concat([i]);
+                findContent(tempConfig.content[i], tempPath, cb);
+            }
+        }
+    });
+}
+
 type ConfigType = {
     settings: {
         showPopoutIcon: boolean;
+        showCloseIcon: boolean;
     };
     content: {
         type: string;
@@ -341,6 +391,7 @@ function findConfig(defaultConfig: ConfigType, options: CompilerExplorerOptions,
                 $('.ui-presentation-next').on('click', presentation.next.bind(presentation));
             }
         } else {
+            // console.log('finding config');
             if (options.config) {
                 config = options.config;
             } else {
@@ -353,8 +404,8 @@ function findConfig(defaultConfig: ConfigType, options: CompilerExplorerOptions,
                         'Decode Error',
                         'An error was encountered while decoding the URL, the last locally saved configuration will ' +
                             "be used if present.<br/><br/>Make sure the URL you're using hasn't been truncated, " +
-                            'otherwise if you believe your URL is valid please let us know on ' +
-                            '<a href="https://github.com/compiler-explorer/compiler-explorer/issues">our github</a>.',
+                            'otherwise if you believe your URL is valid please let us know on ',
+                            // '<a href="https://github.com/compiler-explorer/compiler-explorer/issues">our github</a>.',
                         {isError: true},
                     );
                 }
@@ -365,8 +416,52 @@ function findConfig(defaultConfig: ConfigType, options: CompilerExplorerOptions,
                 config = _.extend(defaultConfig, config);
             }
             if (!config) {
-                const savedState = sessionThenLocalStorage.get('gl', null);
-                config = savedState !== null ? JSON.parse(savedState) : defaultConfig;
+                // const savedState = local.get('gl', null);
+                // config = savedState !== null ? JSON.parse(savedState) : defaultConfig;
+
+                let sessionName;
+                let savedState;
+                if (options.programCourse) {
+                    sessionName = 'gl';
+                    savedState = sessionThenLocalStorage.get(sessionName, null);
+                    config = savedState !== null ? JSON.parse(savedState) : defaultConfig;
+        
+                    if (savedState !== null) {
+                        findContent(config, [], function (err, path) {
+                            let objPath = '';
+                            for (let i = 0; i < path.length; i++) {
+                                if (Number.isInteger(path[i])) {
+                                    objPath += '[' + path[i] + ']';
+                                } else {
+                                    objPath += '["' + path[i] + '"]';
+                                }
+                                if (i + 1 === path.length) {
+                                    // var showNestedObj = "return config" + objPath + ";";
+                                    const changeNestedObj = 'var result = config; result'
+                                        + objPath + '["componentState"]["source"]'
+                                        + ' = value; return result;';
+                                    // var showNestedObjF = new Function("config", showNestedObj);
+                                    const changeNestedObjF = new Function('config', 'value', changeNestedObj);
+                                    // var codeEditorObj = showNestedObjF(config);
+                                    // console.log(changeNestedObj(config, "test"));
+                                    config = changeNestedObjF(config, options.languages[defaultLangId].example);
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    sessionName = 'gl';
+                    savedState = sessionThenLocalStorage.get(sessionName, null);
+                    config = savedState !== null ? JSON.parse(savedState) : defaultConfig;
+    
+                    if (savedState !== null) {
+                        findProgram(config, [], function (err, result) {
+                            if (result) {
+                                config = undefined;
+                            }
+                        });
+                    }
+                }
             }
         }
     } else {
@@ -383,8 +478,8 @@ function findConfig(defaultConfig: ConfigType, options: CompilerExplorerOptions,
         );
     }
 
-    removeOrphanedMaximisedItemFromConfig(config);
-    fixBugsInConfig(config);
+    // removeOrphanedMaximisedItemFromConfig(config);
+    // fixBugsInConfig(config);
 
     return config;
 }
@@ -578,6 +673,8 @@ function sizeCheckNavHideables() {
 function start() {
     initializeResetLayoutLink();
 
+    // console.log('main.js options', options);
+
     const hostnameParts = window.location.hostname.split('.');
     let subLangId: LanguageKey | undefined = undefined;
     // Only set the subdomain lang id if it makes sense to do so
@@ -592,6 +689,7 @@ function start() {
     }
 
     const defaultLangId = getDefaultLangId(subLangId, options);
+    // console.log('defaultLangId', defaultLangId);
 
     setupLanguageLogos(options.languages);
 
@@ -604,15 +702,33 @@ function start() {
         jsCookie = jsCookie.withAttributes({domain: cookieDomain[0]});
     }
 
-    const defaultConfig = {
-        settings: {showPopoutIcon: false},
-        content: [
+    let defaultContent;
+    if (options.programCourse) {
+        defaultContent = [
             {
                 type: 'row',
-                content: [Components.getEditor(defaultLangId, 1), Components.getCompiler(1, defaultLangId)],
+                content: [
+                    Components.getProgram(1, defaultLangId),
+                    {
+                        type: 'column',
+                        content: [Components.getEditor(defaultLangId, 1), Components.getExecutor(1, defaultLangId)],
+                    },
+                ],
             },
-        ],
+        ];
+    } else {
+        defaultContent = [
+            {
+                type: 'row',
+                content: [Components.getEditor(defaultLangId, 1), Components.getExecutor(1, defaultLangId)],
+            },
+        ];
+    }
+    const defaultConfig = {
+        settings: {showPopoutIcon: false, showCloseIcon: !options.programCourse},
+        content: defaultContent,
     };
+    // console.log('defaultConfig', defaultConfig);
 
     $(window).on('hashchange', () => {
         // punt on hash events and just reload the page if there's a hash
@@ -620,7 +736,14 @@ function start() {
     });
 
     // Which buttons act as a linkable popup
-    const linkablePopups = ['#ces', '#sponsors', '#changes', '#cookies', '#setting', '#privacy'];
+    const linkablePopups = [
+        // '#ces',
+        // '#sponsors',
+        '#changes',
+        '#cookies',
+        '#setting',
+        '#privacy',
+    ];
     let hashPart = linkablePopups.includes(window.location.hash) ? window.location.hash : null;
     if (hashPart) {
         window.location.hash = '';
@@ -629,20 +752,48 @@ function start() {
     }
 
     const config = findConfig(defaultConfig, options, defaultLangId);
+    // config.settings.showCloseIcon = !options.programCourse;
+    // defaultConfig.settings.showCloseIcon = false;
+
+    if (options.programCourse) {
+        config.content = [
+            {
+                type: 'row',
+                content: [
+                    Components.getProgram(1, defaultLangId),
+                    {
+                        type: 'column',
+                        content: [Components.getEditor(defaultLangId, 1), Components.getExecutor(1, defaultLangId)],
+                    },
+                ],
+            },
+        ];
+        config.content[0].isClosable = false;
+        config.content[0].content[0].isClosable = false;
+        // config.content[0].content[0].content[0].isClosable = false;
+        config.content[0].content[1].isClosable = false;
+        config.content[0].content[1].content[0].isClosable = false;
+        config.content[0].content[1].content[1].isClosable = false;
+        config.settings.showCloseIcon = false;
+        config.settings.isClosable = false;
+        config.isClosable = false;
+    }
 
     const root = $('#root');
 
     let layout: GoldenLayout;
     let hub: Hub;
     try {
+        // console.log('config', config);
         layout = new GoldenLayout(config, root);
+        // console.log('layout', layout);
         hub = new Hub(layout, subLangId, defaultLangId);
     } catch (e) {
-        SentryCapture(e, 'goldenlayout/hub setup');
+        Sentry.captureException(e);
 
-        if (document.URL.includes('/z/')) {
-            document.location = document.URL.replace('/z/', '/resetlayout/');
-        }
+        // if (document.URL.includes('/z/')) {
+        //     document.location = document.URL.replace('/z/', '/resetlayout/');
+        // }
 
         layout = new GoldenLayout(defaultConfig, root);
         hub = new Hub(layout, subLangId, defaultLangId);
@@ -694,9 +845,14 @@ function start() {
         });
     }
 
-    setupAdd($('#add-editor'), () => {
-        return Components.getEditor(defaultLangId);
-    });
+
+    if (!options.programCourse) {
+        setupAdd($('#add-editor'), () => {
+            return Components.getEditor(defaultLangId);
+        });
+    } else {
+        $('#addDropdown').css('display', 'none');
+    }
     setupAdd($('#add-diff'), () => {
         return Components.getDiffView();
     });
@@ -711,51 +867,51 @@ function start() {
     }
     initPolicies(options);
 
-    // Skip some steps if using embedded mode
-    if (!options.embedded) {
-        // Only fetch MOTD when not embedded.
-        motd.initialise(
-            options.motdUrl,
-            $('#motd'),
-            subLangId ?? '',
-            settings.enableCommunityAds,
-            data => {
-                const sendMotd = () => {
-                    hub.layout.eventHub.emit('motd', data);
-                };
-                hub.layout.eventHub.on('requestMotd', sendMotd);
-                sendMotd();
-            },
-            () => {
-                hub.layout.eventHub.emit('modifySettings', {
-                    enableCommunityAds: false,
-                });
-            },
-        );
+    // // Skip some steps if using embedded mode
+    // if (!options.embedded) {
+    //     // Only fetch MOTD when not embedded.
+    //     motd.initialise(
+    //         options.motdUrl,
+    //         $('#motd'),
+    //         subLangId ?? '',
+    //         settings.enableCommunityAds,
+    //         data => {
+    //             const sendMotd = () => {
+    //                 hub.layout.eventHub.emit('motd', data);
+    //             };
+    //             hub.layout.eventHub.on('requestMotd', sendMotd);
+    //             sendMotd();
+    //         },
+    //         () => {
+    //             hub.layout.eventHub.emit('modifySettings', {
+    //                 enableCommunityAds: false,
+    //             });
+    //         },
+    //     );
 
-        // Don't try to update Version tree link
-        const release = window.compilerExplorerOptions.gitReleaseCommit;
-        let versionLink = 'https://github.com/compiler-explorer/compiler-explorer/';
-        if (release) {
-            versionLink += 'tree/' + release;
-        }
-        $('#version-tree').prop('href', versionLink);
-    }
+    //     // Don't try to update Version tree link
+    //     const release = window.compilerExplorerOptions.gitReleaseCommit;
+    //     let versionLink = 'https://github.com/compiler-explorer/compiler-explorer/';
+    //     if (release) {
+    //         versionLink += 'tree/' + release;
+    //     }
+    //     $('#version-tree').prop('href', versionLink);
+    // }
 
     if (options.hideEditorToolbars) {
         $('[name="editor-btn-toolbar"]').addClass('d-none');
     }
 
-    window.onSponsorClick = (sponsorUrl: string) => {
-        analytics.proxy('send', {
-            hitType: 'event',
-            eventCategory: 'Sponsors',
-            eventAction: 'click',
-            eventLabel: sponsorUrl,
-            transport: 'beacon',
-        });
-        window.open(sponsorUrl);
-    };
+    // window.onSponsorClick = (sponsorUrl: string) => {
+    //     analytics.proxy('send', {
+    //         hitType: 'event',
+    //         eventCategory: 'Sponsors',
+    //         eventAction: 'click',
+    //         eventLabel: sponsorUrl,
+    //         transport: 'beacon',
+    //     });
+    //     window.open(sponsorUrl);
+    // };
 
     if (options.pageloadUrl) {
         setTimeout(() => {
@@ -767,7 +923,9 @@ function start() {
         }, 5000);
     }
 
-    sizeRoot();
+    // setTimeout(() => {
+    //     $('#signinModal').modal('show');
+    // }, 4000);
 
     // This is an attempt to deal with #4714. Some sort of weird behavior causing .lm_tabs container to not be properly
     // sized and the tab to overflow. Though the tabs do, at least briefly, fit fine. Overflow is hidden in css and this
