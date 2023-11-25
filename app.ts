@@ -993,11 +993,11 @@ async function main() {
         //     staticHeaders(res);
         //     res.end('User-agent: *\nSitemap: https://godbolt.org/sitemap.xml\nDisallow:');
         // })
-        // .get('/sitemap.xml', (req, res) => {
-        //     staticHeaders(res);
-        //     res.set('Content-Type', 'application/xml');
-        //     res.render('sitemap');
-        // })
+        .get('/sitemap.xml', (req, res) => {
+            staticHeaders(res);
+            res.set('Content-Type', 'application/xml');
+            res.render('sitemap');
+        })
         .use(sFavicon(utils.resolvePathFromAppRoot('static/favicons', getFaviconFilename())))
         .get('/client-options.js', async (req, res) => {
             staticHeaders(res);
