@@ -914,6 +914,7 @@ async function main() {
                 '/check-mail',
                 '/bugs-report',
                 '/contact',
+                '/courses/cpp',
                 '/hire',
                 '/overview',
                 '/learn-languages/cpp',
