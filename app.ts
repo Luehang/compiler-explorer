@@ -887,6 +887,23 @@ async function main() {
         //         ),
         //     );
         // })
+        .get('/code', (req, res) => {
+            staticHeaders(res);
+            contentPolicyHeader(res);
+            res.render(
+                'index',
+                renderConfig(
+                    {
+                        // title: 'Online C/C++ Compiler',
+                        brandName: process.env.BRAND_NAME,
+                        programCourse: false,
+                        embedded: false,
+                        mobileViewer: isMobileViewer(req),
+                    },
+                    req.query,
+                ),
+            );
+        })
         .get(
             [
                 '/',
